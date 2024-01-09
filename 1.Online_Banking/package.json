@@ -1,0 +1,16 @@
+{
+  "name": "1.online_banking",
+  "version": "1.0.0",
+  "description": "- Users must be able to log in with a username and password.\r - If the user enters the wrong credentials three times, the system must lock them out.\r - The initial balance in the bank account is $2000.\r - The system must allow users to deposit, withdraw, view, and transfer money.\r - The system must display a menu for users to perform transactions.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "inquirer": "^9.2.12"
+  }
+}
