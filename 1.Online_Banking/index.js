@@ -1,4 +1,11 @@
 import inquirer from "inquirer";
+import {
+  loginQuestions,
+  currencyList,
+  bankQuestions,
+  depositQuestion,
+} from "./questions.js";
+import { config } from "./config.js";
 
 let tries = 0;
 let maxTries = 3;
@@ -6,28 +13,28 @@ let users = [
   {
     username: "leona",
     password: "123",
-    amount: 2000,
+    balance: {
+      USD: 2000,
+      CLP: 0,
+      ARS: 0,
+      EUR: 0,
+      TRY: 0,
+      GPB: 0,
+    },
     isLocked: true,
   },
   {
     username: "lucian",
     password: "123",
-    amount: 2000,
+    balance: {
+      USD: 2000,
+      CLP: 0,
+      ARS: 0,
+      EUR: 0,
+      TRY: 0,
+      GPB: 0,
+    },
     isLocked: false,
-  },
-];
-
-const loginQuestions = [
-  {
-    type: "input",
-    name: "username",
-    message: "Enter your username",
-  },
-  {
-    type: "password",
-    name: "password",
-    message: "Enter your password",
-    mask: "*",
   },
 ];
 
@@ -71,15 +78,6 @@ const authenticate = () => {
     });
 };
 
-const bankQuestions = [
-  {
-    type: "list",
-    name: "operation",
-    message: "Select the operation to make in the online Bank system",
-    choices: ["View", "Deposit", "Withdraw", "Transfer"],
-  },
-];
-
 const bankOperations = (currentUser) => {
   inquirer
     .prompt(bankQuestions)
@@ -87,7 +85,7 @@ const bankOperations = (currentUser) => {
       let { operation } = answers;
       switch (operation) {
         case "View":
-          console.log(`Your money: ${currentUser.amount} USD`);
+          console.log(`Your balance is: ${currentUser.balance.USD} USD`);
           break;
         case "Deposit":
           depositOperation(currentUser);
@@ -97,6 +95,9 @@ const bankOperations = (currentUser) => {
           break;
         case "Transfer":
           transferOperation(currentUser);
+          break;
+        case "Currency Converter":
+          currencyOperation(currentUser);
           break;
       }
     })
@@ -111,16 +112,10 @@ const bankOperations = (currentUser) => {
 
 const depositOperation = (currentUser) => {
   inquirer
-    .prompt([
-      {
-        type: "input",
-        name: "deposit",
-        message: "How much do you want to deposit?",
-      },
-    ])
+    .prompt(depositQuestion)
     .then((answers) => {
       let { deposit } = answers;
-      let newBalance = currentUser.amount + parseFloat(deposit);
+      let newBalance = currentUser.balance.USD + parseFloat(deposit);
       console.log(
         `Your deposit is: ${deposit} and your new balance is: ${newBalance}`
       );
@@ -145,7 +140,7 @@ const withdrawOperation = (currentUser) => {
     ])
     .then((answers) => {
       let { withdraw } = answers;
-      let newBalance = currentUser.amount - parseFloat(withdraw);
+      let newBalance = currentUser.balance.USD - parseFloat(withdraw);
       if (newBalance < 0) {
         console.log("You don't have enough money");
       } else {
@@ -179,7 +174,7 @@ const transferOperation = (currentUser) => {
     ])
     .then((answers) => {
       let { transfer, target } = answers;
-      let newBalance = currentUser.amount - parseFloat(transfer);
+      let newBalance = currentUser.balance.USD - parseFloat(transfer);
       let targetUser = users.find((el) => el.username === target);
 
       if (newBalance < 0) {
@@ -188,11 +183,30 @@ const transferOperation = (currentUser) => {
         console.log("Target Bank account doesn't exist");
         return false;
       } else {
-        targetUser.amount += parseFloat(transfer);
+        targetUser.balance.USD += parseFloat(transfer);
         console.log(
           `You transferred ${transfer} and your new balance is: ${newBalance}`
         );
       }
+    })
+    .catch((error) => {
+      if (error.isTtyError) {
+        console.log(error.isTtyError);
+      } else {
+        // Something else went wrong
+      }
+    });
+};
+
+const currencyOperation = (currentUser) => {
+  inquirer
+    .prompt(currencyList)
+    .then((answers) => {
+      const API_KEY = config.API.API_KEY;
+      const balance = currentUser.balance.USD;
+      let { amount, target } = answers;
+      let apiUrl = `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/USD`;
+      console.log(apiUrl);
     })
     .catch((error) => {
       if (error.isTtyError) {
