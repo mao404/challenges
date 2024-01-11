@@ -178,10 +178,9 @@ const currencyOperation = (currentUser) => {
           const exchangeRates = data.conversion_rates;
           const convertionRate = exchangeRates[target];
           const newBalance = amount * convertionRate;
-          //const comissionRate = 0.01; // 1%
-          //const comissionExchange = newBalance * comissionRate;
-          //const total = parseFloat((newBalance - comissionExchange).toFixed(2));
-          const currencyAdd = currentUser.balance[target] + newBalance;
+          const currencyAdd = parseFloat(
+            currentUser.balance[target] + newBalance
+          ).toFixed(2);
           const realBalance = balance - amount;
           if (realBalance < 0) {
             console.log("Not enough funds to perform this task");
@@ -210,8 +209,10 @@ const fundsWithdrawOperation = (currentUser, target, currencyAdd) => {
       const { withdraw } = answers;
       switch (withdraw) {
         case "Yes":
-          const funds = (currentUser.balance[target] = currencyAdd);
-          console.log(`You just withdrew ${target} ${funds} `);
+          const comissionRate = 0.01; // 1%
+          const funds = currencyAdd;
+          const comission = parseFloat(funds * comissionRate).toFixed(2);
+          console.log(`You just withdrew ${target} ${funds - comission} `);
           continueOperation(currentUser);
           break;
         case "No":
