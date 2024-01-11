@@ -4,39 +4,16 @@ import {
   currencyList,
   bankQuestions,
   depositQuestion,
+  transferQuestion,
+  withdrawQuestion,
+  fundsWithdrawQuestion,
+  continueQuestion,
 } from "./questions.js";
 import { config } from "./config.js";
+import { users } from "./db.js";
 
 let tries = 0;
 let maxTries = 3;
-let users = [
-  {
-    username: "leona",
-    password: "123",
-    balance: {
-      USD: 2000,
-      CLP: 0,
-      ARS: 0,
-      EUR: 0,
-      TRY: 0,
-      GPB: 0,
-    },
-    isLocked: true,
-  },
-  {
-    username: "lucian",
-    password: "123",
-    balance: {
-      USD: 2000,
-      CLP: 0,
-      ARS: 0,
-      EUR: 0,
-      TRY: 0,
-      GPB: 0,
-    },
-    isLocked: false,
-  },
-];
 
 const authenticate = () => {
   inquirer
@@ -86,6 +63,7 @@ const bankOperations = (currentUser) => {
       switch (operation) {
         case "View":
           console.log(`Your balance is: ${currentUser.balance.USD} USD`);
+          continueOperation(currentUser);
           break;
         case "Deposit":
           depositOperation(currentUser);
@@ -99,6 +77,8 @@ const bankOperations = (currentUser) => {
         case "Currency Converter":
           currencyOperation(currentUser);
           break;
+        case "Exit":
+          process.exit(0);
       }
     })
     .catch((error) => {
@@ -119,6 +99,7 @@ const depositOperation = (currentUser) => {
       console.log(
         `Your deposit is: ${deposit} and your new balance is: ${newBalance}`
       );
+      continueOperation(currentUser);
     })
     .catch((error) => {
       if (error.isTtyError) {
@@ -131,22 +112,17 @@ const depositOperation = (currentUser) => {
 
 const withdrawOperation = (currentUser) => {
   inquirer
-    .prompt([
-      {
-        type: "input",
-        name: "withdraw",
-        message: "How much do you want to withdraw?",
-      },
-    ])
+    .prompt(withdrawQuestion)
     .then((answers) => {
       let { withdraw } = answers;
       let newBalance = currentUser.balance.USD - parseFloat(withdraw);
       if (newBalance < 0) {
-        console.log("You don't have enough money");
+        console.log("You don't have enough funds");
       } else {
         console.log(
           `You withdrew ${withdraw} and your new balance is: ${newBalance}`
         );
+        continueOperation();
       }
     })
     .catch((error) => {
@@ -160,25 +136,14 @@ const withdrawOperation = (currentUser) => {
 
 const transferOperation = (currentUser) => {
   inquirer
-    .prompt([
-      {
-        type: "input",
-        name: "transfer",
-        message: "How much do you want to transfer?",
-      },
-      {
-        type: "input",
-        name: "target",
-        message: "To who do you want to transfer?",
-      },
-    ])
+    .prompt(transferQuestion)
     .then((answers) => {
       let { transfer, target } = answers;
       let newBalance = currentUser.balance.USD - parseFloat(transfer);
       let targetUser = users.find((el) => el.username === target);
 
       if (newBalance < 0) {
-        console.log("You don't have enough money");
+        console.log("You don't have enough funds");
       } else if (!targetUser) {
         console.log("Target Bank account doesn't exist");
         return false;
@@ -188,6 +153,7 @@ const transferOperation = (currentUser) => {
           `You transferred ${transfer} and your new balance is: ${newBalance}`
         );
       }
+      continueOperation(currentUser);
     })
     .catch((error) => {
       if (error.isTtyError) {
@@ -206,7 +172,74 @@ const currencyOperation = (currentUser) => {
       const balance = currentUser.balance.USD;
       let { amount, target } = answers;
       let apiUrl = `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/USD`;
-      console.log(apiUrl);
+      fetch(apiUrl)
+        .then((response) => response.json())
+        .then((data) => {
+          const exchangeRates = data.conversion_rates;
+          const convertionRate = exchangeRates[target];
+          const newBalance = amount * convertionRate;
+          //const comissionRate = 0.01; // 1%
+          //const comissionExchange = newBalance * comissionRate;
+          //const total = parseFloat((newBalance - comissionExchange).toFixed(2));
+          const currencyAdd = currentUser.balance[target] + newBalance;
+          const realBalance = balance - amount;
+          if (realBalance < 0) {
+            console.log("Not enough funds to perform this task");
+            currencyOperation(currentUser);
+          } else {
+            console.log(
+              `Your new balance in ${target} is ${currencyAdd} and your base balance is ${realBalance}`
+            );
+            fundsWithdrawOperation(currentUser, target, currencyAdd);
+          }
+        });
+    })
+    .catch((error) => {
+      if (error.isTtyError) {
+        console.log(error.isTtyError);
+      } else {
+        // Something else went wrong
+      }
+    });
+};
+
+const fundsWithdrawOperation = (currentUser, target, currencyAdd) => {
+  inquirer
+    .prompt(fundsWithdrawQuestion)
+    .then((answers) => {
+      const { withdraw } = answers;
+      switch (withdraw) {
+        case "Yes":
+          const funds = (currentUser.balance[target] = currencyAdd);
+          console.log(`You just withdrew ${target} ${funds} `);
+          continueOperation(currentUser);
+          break;
+        case "No":
+          continueOperation(currentUser);
+          break;
+      }
+    })
+    .catch((error) => {
+      if (error.isTtyError) {
+        console.log(error.isTtyError);
+      } else {
+        // Something else went wrong
+      }
+    });
+};
+
+const continueOperation = (currentUser) => {
+  inquirer
+    .prompt(continueQuestion)
+    .then((answers) => {
+      const { next } = answers;
+      switch (next) {
+        case "Yes":
+          bankOperations(currentUser);
+          break;
+        case "No":
+          process.exit(0);
+      }
     })
     .catch((error) => {
       if (error.isTtyError) {

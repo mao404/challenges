@@ -56,7 +56,14 @@ export const bankQuestions = [
     type: "list",
     name: "operation",
     message: "Select the operation to make in the online Bank system",
-    choices: ["View", "Deposit", "Withdraw", "Transfer", "Currency Converter"],
+    choices: [
+      "View",
+      "Deposit",
+      "Withdraw",
+      "Transfer",
+      "Currency Converter",
+      "Exit",
+    ],
   },
 ];
 
@@ -65,5 +72,44 @@ export const depositQuestion = [
     type: "input",
     name: "deposit",
     message: "How much do you want to deposit?",
+  },
+];
+
+export const transferQuestion = [
+  {
+    type: "input",
+    name: "transfer",
+    message: "How much do you want to transfer?",
+  },
+  {
+    type: "input",
+    name: "target",
+    message: "To who do you want to transfer?",
+  },
+];
+
+export const withdrawQuestion = [
+  {
+    type: "input",
+    name: "withdraw",
+    message: "How much do you want to withdraw?",
+  },
+];
+
+export const fundsWithdrawQuestion = [
+  {
+    type: "list",
+    name: "withdraw",
+    message: "Do you wish to withdraw your funds?",
+    choices: ["Yes", "No"],
+  },
+];
+
+export const continueQuestion = [
+  {
+    type: "list",
+    name: "next",
+    message: "Do you wish to do another operation?",
+    choices: ["Yes", "No"],
   },
 ];

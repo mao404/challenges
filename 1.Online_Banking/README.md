@@ -18,5 +18,5 @@
 
 - Re factor code
 - Make controllers
-- Add mongoDB
+- Add mongoDB to persist the money balances
 - Unit testing
